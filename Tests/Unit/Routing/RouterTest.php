@@ -15,6 +15,8 @@ use ONGR\RouterBundle\Routing\RequestContext;
 use ONGR\RouterBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Scope;
+use Symfony\Component\Routing\Loader\ObjectRouteLoader;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Tests for url matcher class.
@@ -33,6 +35,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase
         $container = $container ? $container : new ContainerBuilder();
 
         $customModel = new \stdClass();
+        $container->set('routing.loader', new ObjectRouteLoaderForTest());
         $container->set('es.manager', $customModel);
         $container->setParameter('ongr_router.seo_route', []);
         $container->setParameter('ongr_router.seo_key', null);
@@ -50,10 +53,10 @@ class RouterTest extends \PHPUnit_Framework_TestCase
 
         return new Router(
             $container,
-            false,
+            'service:actionForTest',
             [
-                'matcher_class' => 'stdClass',
-                'generator_class' => 'stdClass',
+                'matcher_class'   => \stdClass::class,
+                'generator_class' => \stdClass::class,
             ],
             $context
         );
@@ -106,11 +109,28 @@ class RouterTest extends \PHPUnit_Framework_TestCase
     public function testGetGeneratorNoRequestScope()
     {
         $container = new ContainerBuilder();
-        $router = $this->getRouter($container);
+        $router    = $this->getRouter($container);
 
         $container->get('request')->expects($this->never())->method('getPathInfo');
         $container->leaveScope('request');
 
         $this->assertInstanceOf('ONGR\RouterBundle\Routing\SeoUrlGenerator', $router->getGenerator());
+    }
+}
+
+
+class ObjectRouteLoaderForTest extends ObjectRouteLoader
+{
+    protected function getServiceObject($id)
+    {
+        return new RouteLoaderForTest();
+    }
+}
+
+class RouteLoaderForTest
+{
+    public function actionForTest()
+    {
+        return new RouteCollection();
     }
 }
