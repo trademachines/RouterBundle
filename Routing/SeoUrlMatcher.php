@@ -11,7 +11,7 @@
 
 namespace ONGR\RouterBundle\Routing;
 
-use ONGR\ElasticsearchBundle\DSL\Bool\Bool;
+use ONGR\ElasticsearchBundle\DSL\Query\BoolQuery;
 use ONGR\ElasticsearchBundle\DSL\Query\MatchQuery;
 use ONGR\ElasticsearchBundle\DSL\Query\NestedQuery;
 use ONGR\ElasticsearchBundle\DSL\Query\TermQuery;
@@ -212,14 +212,14 @@ class SeoUrlMatcher extends RedirectableUrlMatcher
             return $search;
         }
 
-        $bool = new Bool();
-        $bool->addToBool(new MatchQuery('urls.url', $url));
+        $boolQuery = new BoolQuery();
+        $boolQuery->add(new MatchQuery('urls.url', $url));
 
         if ($this->urlKey != null) {
-            $bool->addToBool(new TermQuery('urls.key', $this->urlKey));
+            $boolQuery->add(new TermQuery('urls.key', $this->urlKey));
         }
 
-        $search->addQuery(new NestedQuery('urls', $bool), 'should');
+        $search->addQuery(new NestedQuery('urls', $boolQuery), 'should');
         $search->addQuery(new TermQuery('expired_urls', $this->getUrlHash($url)), 'should');
 
         return $search;
